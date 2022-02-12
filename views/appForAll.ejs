@@ -1,0 +1,25 @@
+<!DOCTYPE html> 
+
+<head> 
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta charset="UTF-8"> 
+    <title>Mokinio informacija:</title> 
+    <link rel="stylesheet" href="./public/style.css" />
+</head> 
+<body>
+<div  id="app"> 
+ <h2>Mokinio informacija </h2><br>
+
+ <p>Vardas:   <%-     mokinys.name      %></p>
+  <p>Pavarė:   <%- mokinys.surname  %></p>
+  <p>El.paštas:   <%-     mokinys.email      %></p>
+  <p>Asmens kodas:   <%- mokinys.asmens_kodas  %></p>
+  <p>password:   <%-     mokinys.password      %></p>
+  <p>ID:   <%- mokinys.id  %></p>
+
+</div>
+</body>
+<script>
+
+//document.getElementById("app").innerHTML = ` Wualia  ${mokinys}`
+</script>
