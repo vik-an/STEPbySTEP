@@ -123,9 +123,9 @@ res.json(updatedUser)
   } 
 
   //////////////////
-const postUserId = (req, res)=> {
+const postUserId =  (req, res)=> {
 
-   res.status(200).render('./appForAll.ejs')
+   
    
     mokinys = res.mokinys;
     mokinys.name = res.mokinys.name;
@@ -134,7 +134,7 @@ const postUserId = (req, res)=> {
     mokinys.asmens_kodas = res.mokinys.asmens_kodas;
     mokinys.password =  res.mokinys.password;
 
-
+res.status(200).render('./appForAll.ejs')
  //res.status(500).send(res.mokinys.name);
 
 

@@ -10,6 +10,7 @@ const mongoose = require('mongoose');
 const path = require('path/posix'); 
 const { query } = require('express');
 const serveStatic = require('serve-static');
+//const expressLayouts = require('express-ejs-layouts')
 
 mongoose.connect(process.env.DATABASE_URL, { useNewUrlParser: true});
 // nustatymas kuris parodo kur klaida kelyje i db
@@ -21,9 +22,11 @@ db.once('open', () => console.log('sėkmingai prisijungta prie duomenų bazės')
 app.use(express.json())
 app.set('views engine, ' ,'ejs' )
 app.set('views',__dirname + '/views') //nustato kad vaizdu ieskos views faile, ir daugiau jo kartoti nebereikia
-app.use(express.static('public/style.css')) // vis neveikia...
+app.use(express.static('./public')) //  IR VISTIEK  neveikia...
+//app.use(serveStatic('public/style.css', { index: 'default.html' }))
 app.use(express.urlencoded({ extended: false})) //kad skaitytu gautą tekstą iš html
 
+//app.use(serveStatic())
 //
 app.use('/',router)
 
