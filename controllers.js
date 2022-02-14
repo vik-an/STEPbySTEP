@@ -1,166 +1,168 @@
-const { append } = require('express/lib/response');
-const fs = require('fs');
-const { now } = require('mongoose');
-const mokiniai = require('./models/mokiniai');
-//const document = require("app")
+const Student = require('./models/student.js');
 
-////////////
-const getRegister =(req, res) =>{
-    res.status(200).render('./register.ejs') 
-    console.log("bakst į serverį iš registracijos get ")
+/**
+ *
+ */
+const getRegister = (req, res) => {
+    res.render('./register.ejs')
 };
-/////////
-const postRegister = async (req, res)=> {
-    const Mokinys = new mokiniai({
-        id: Date.now(),
-        name: req.body.name,
-        surname: req.body.surname,
-        email: req.body.email,
-        password: req.body.password,
-        asmens_kodas: req.body.asmens_kodas
-    })
 
-    console.log("bando registruotis  naujas Mokinys", Mokinys)
-    try{ // patikrinti ar toks mokinys jau yra ir neleisti vel registruotis
-        const burbulas = await mokiniai.find({asmens_kodas: Mokinys.asmens_kodas})
-        
-        if(burbulas.length !== 0){
-            console.log( "same asmens_kodas  ",burbulas);
-            res.send(" Tokiu asmens kodu  mokinys jau yra užregistruotas")
-        }else{
-        const newMokinys = await Mokinys.save()
+/**
+ * Užregistruoja naują mokinį.
+ * Grąžina klaidą, jei mokinys su tokiu pat asmens kodu jau registruotas.
+ */
+const postRegister = async (req, res, next) => {
+    try {
+        if (await Student.exists({ personalCode: req.body.personalCode })) {
+            return res.status(409).send(" Tokiu asmens kodu mokinys jau yra užregistruotas");
+        }
 
-         res.status(201).json({msg: ` mokinys vardu ${req.body.name} sukurtas sėkmingai. Prisijungimui prie sistemos Jums sukurtas  ID : ${newMokinys.id}`})
-        
-        console.log("naujas mokinys: ", newMokinys)}
-    }catch(err){
-        res.status(400).json({ msg: err.message})
+        const newStudent = new Student({
+            name: req.body.name,
+            surname: req.body.surname,
+            email: req.body.email,
+            password: req.body.password, // TODO: salt and encrypt password
+            personalCode: req.body.personalCode
+        });
+        const savedStudent = await newStudent.save();
+        // TODO: return better object for client Jscript or a nicer page
+        res.status(201).json({ msg: `Naujas mokinys vardu ${newStudent.name} sukurtas sėkmingai. Prisijungimui prie sistemos naudokite: ${newStudent.email}` });
     }
-    
-    let Mok = JSON.stringify([req.body]);
-    fs.writeFileSync('./mokiniaiVisi.txt',` mokinys: id ${Date(now)}  ${Mok} `,{flag: "a"})
+    catch (error) {
+        // TODO: status code may be incorrect - what kind of exceptions do we expect to deal with here? invalid user input? internal server error? both?
+        console.error(`Klaida registruojant mokinį: ${error}`);
+        res.status(400).send({ msg: "Nepavyko užregistruoti naujo mokinio" });
+    }
 };
 
-//////////////////////
- const getLogin =  (req,res) =>{
-    res.status(200).render('./login.ejs')
-     console.log( "get Logine yra : " , req.body)
-     
- };
+/**
+ *
+ */
+const getLogin = (req, res) => {
+    res.render('./login.ejs');
+};
 
- //////////
- const postLogin = async ( req,res) =>{
-    //let mokinys
-       console.log(req.params)
-       const { id} = req.body;
-       const { email } = req.body,
-       mokinys = await mokiniai.find({ id: id, email : email })
-      
-         if(mokinys == null)  {
-                return res.status(404).json({msg: "Tokiu email arba asmens kodu mokinio nėra"})
-                
-            }
-               
-         else{      
-           
-   
-     
-    
-    
-    res.mokinys = mokinys
+/**
+ *
+ */
+const postLogin = async (req, res) => {
+    const student = await Student.findOne({ email: req.body.email });
+    if (student == null) {
+        res.status(404).json({ msg: "Nurodytas mokinys nerastas" });
+        return;
+    }
+
+    // TODO: verify password
+
     //res.status(200).render('./appForAll.ejs')
-    res.status(200).json({mokinys})
-    console.log("toks yra : ", mokinys)
-}
- }
-////////////
-const editUser = async (req, res) => {
-
-   // console.log(" editUser pradzia", req.body)
-if (req.body.name != null){
-    res.mokinys.name = req.body.name
-}
-if (req.body.surname != null){
-    res.mokinys.surname = req.body.surname
-}
-if (req.body.email != null){
-    res.mokinys.email = req.body.email
-}
-if (req.body.password != null){
-    res.mokinys.password = req.body.password
-}
-if (req.body.asmens_kodas != null){
-    res.mokinys.asmens_kodas = req.body.asmens_kodas
-}
-try { const updatedUser = await res.mokinys.save()
-res.json(updatedUser)
-} catch(err) {
-    res.status(400).json({msg: err.message})
-}
+    res.json(student)
 }
 
-///////////
- const deleteUser = async  (req, res) => {
-     try{ 
-         await res.mokinys.remove()
-         res.json({ msg: " Delete mokinys"})
+/**
+ * Funkcija tikisi kad bus nustatyta res.student : Student (žr. getUser())
+ */
+const patchUser = async (req, res) => {
+    try {
+        if (req.body.name != null) {
+            res.student.name = req.body.name
+        }
+        if (req.body.surname != null) {
+            res.student.surname = req.body.surname
+        }
+        if (req.body.email != null) {
+            res.student.email = req.body.email
+        }
+        if (req.body.password != null) {
+            res.student.password = req.body.password
+        }
+        if (req.body.personalCode != null) {
+            res.student.personalCode = req.body.personalCode
+        }
 
-     }catch (err){
-         res.status(500).json({ msg: err.message})
-     }
- }
+        const updatedUser = await res.student.save();
+        res.json(updatedUser);
+    }
+    catch (error) {
+        // TODO: status code may be incorrect - what kind of exceptions do we expect to deal with here? invalid user input? internal server error? both?
+        console.error(`Klaida keičiant mokinio duomenis: ${error}`);
+        res.status(400).json({ msg: "Nepavyko pakeisti duomenų apie mokinį" });
+    }
+}
 
+/**
+ * Funkcija tikisi kad bus nustatyta res.student : Student (žr. getUser())
+ */
+const deleteUser = async (req, res) => {
+    try {
+        await res.student.remove()
+        res.json({ msg: "Success" })
+    }
+    catch (err) {
+        // TODO: status code may be incorrect - what kind of exceptions do we expect to deal with here? invalid user input? internal server error? both?
+        console.error(`Klaida ištrinant mokinį: ${error}`);
+        res.status(400).json({ msg: 'Nepavyko ištrinti mokinio' });
+    }
+}
 
+/**
+ *
+ */
+const getAllUsers = async (req, res) => {
+    try {
+        const allStudents = await Student.find();
+        res.json(allStudents);
+    }
+    catch (error) {
+        // TODO: status code may be incorrect - what kind of exceptions do we expect to deal with here? invalid user input? internal server error? both?
+        console.error(`Klaida registruojant mokinį: ${error}`);
+        res.status(400).json({ msg: 'Nepavyko užregistruoti naujo mokinio' });
+    }
+}
 
- //////////
- const allUsers = async (req,res) => {
-    try{
-        const Mokiniai = await mokiniai.find()
-        res.json(Mokiniai)
- }catch(err) {
-     res.status(500).json({msg: err.message})
- }
-  } 
+/**
+ *
+ */
+const postUserId = (req, res) => {
+    student = res.student;
+    student.name = res.student.name;
+    student.surname = res.student.surname;
+    student.email = res.student.email;
+    student.personalCode = res.student.personalCode;
+    student.password = res.student.password;
 
-  //////////////////
-const postUserId =  (req, res)=> {
-
-   
-   
-    mokinys = res.mokinys;
-    mokinys.name = res.mokinys.name;
-    mokinys.surname = res.mokinys.surname;
-    mokinys.email = res.mokinys.email;
-    mokinys.asmens_kodas = res.mokinys.asmens_kodas;
-    mokinys.password =  res.mokinys.password;
-
-res.status(200).render('./appForAll.ejs')
- //res.status(500).send(res.mokinys.name);
-
-
-    console.log(mokinys)
+    res.render('./appForAll.ejs');
 };
 
+/**
+ * Randa mokinį su parametruose nurodytu email
+ */
+async function getUser(req, res, next) {
+    try {
+        const student = await Student.findOne({ email: req.params.email })
+        if (!student) {
+            res.status(404).json({ msg: "Tokio mokinio nėra" });
+            return;
+        }
 
-  /////////////
-async function getUser(req, res, next){
-    let mokinys
-    console.log("  get user funk req ", req.body)
-    try{
-        mokinys = await mokiniai.findById(req.params.id)
-            if(mokinys == null)  { // neveikia, nes id o ne _id... :(
-                return res.status(404).json({msg: "Tokiu ID mokinio nėra"})
-            }
-    }catch(err){
-            return res.status(500).json({msg: err.message})
-    } 
-    res.mokinys = mokinys
-    console.log(" getUseryje yra : " , mokinys);
-   next()
+        res.student = student;
+        res.json(student);
+        next();
+    }
+    catch (error) {
+        console.error(`Klaida ieškant mokinio: ${error}`);
+        res.status(400).json({ msg: "Nepavyko surasti mokinio" });
+    }
 }
 
 
-
-
-
- module.exports = {  getLogin,  getRegister, postLogin, postRegister, postUserId, allUsers, getUser, deleteUser, editUser }
+module.exports = {
+    getLogin,
+    getRegister,
+    postLogin,
+    postRegister,
+    postUserId,
+    getAllUsers,
+    getUser,
+    deleteUser,
+    patchUser
+}
