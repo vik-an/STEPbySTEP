@@ -1,4 +1,6 @@
 const Student = require('./models/student.js');
+const bcrypt = require("bcrypt");
+var session = require('express-session')
 
 /**
  *
@@ -17,16 +19,14 @@ const postRegister = async (req, res, next) => {
             return res.status(409).send(" Tokiu asmens kodu mokinys jau yra užregistruotas");
         }
 
-        const newStudent = new Student({
-            name: req.body.name,
-            surname: req.body.surname,
-            email: req.body.email,
-            password: req.body.password, // TODO: salt and encrypt password
-            personalCode: req.body.personalCode
-        });
+        const newStudent = new Student(req.body );
+        // password && save:
+        const salt = await bcrypt.genSalt(10);
+        newStudent.password = await bcrypt.hash(newStudent.password, salt);
         const savedStudent = await newStudent.save();
+
         // TODO: return better object for client Jscript or a nicer page
-        res.status(201).json({ msg: `Naujas mokinys vardu ${newStudent.name} sukurtas sėkmingai. Prisijungimui prie sistemos naudokite: ${newStudent.email}` });
+        res.status(201).json({ msg: `Naujas mokinys vardu ${newStudent.name} sukurtas sėkmingai. Prisijungimui prie sistemos naudokite: ${newStudent.email} ir slaptažodį` });
     }
     catch (error) {
         // TODO: status code may be incorrect - what kind of exceptions do we expect to deal with here? invalid user input? internal server error? both?
@@ -48,90 +48,35 @@ const getLogin = (req, res) => {
 const postLogin = async (req, res) => {
     const student = await Student.findOne({ email: req.body.email });
     if (student == null) {
-        res.status(404).json({ msg: "Nurodytas mokinys nerastas" });
-        return;
+        req.session.error = "nurodytas mokinys nerastas";
+        return res.redirect("/login");
+        // res.status(404).json({ msg: "Nurodytas mokinys nerastas" });
+        // return;
+    } else if(student){
+        const validPassword = await bcrypt.compare(req.body.password, student.password)
+        if( validPassword){
+            req.session.email = student.email;
+            res.redirect("/appForAll.ejs")
+          //  res.status(200).json({msg: `Sveiki prisijungę ${student.name}` })
+
+
+         } else{ 
+       // res.status(400).json({ error: " Neteisingas slaptažodis"})
+        req.session.error = "Neteisingas slaptažodis";
+        return res.redirect("/login");
+           ;}
+
     }
 
     // TODO: verify password
 
     //res.status(200).render('./appForAll.ejs')
-    res.json(student)
+   
 }
 
 /**
  * Funkcija tikisi kad bus nustatyta res.student : Student (žr. getUser())
  */
-const patchUser = async (req, res) => {
-    try {
-        if (req.body.name != null) {
-            res.student.name = req.body.name
-        }
-        if (req.body.surname != null) {
-            res.student.surname = req.body.surname
-        }
-        if (req.body.email != null) {
-            res.student.email = req.body.email
-        }
-        if (req.body.password != null) {
-            res.student.password = req.body.password
-        }
-        if (req.body.personalCode != null) {
-            res.student.personalCode = req.body.personalCode
-        }
-
-        const updatedUser = await res.student.save();
-        res.json(updatedUser);
-    }
-    catch (error) {
-        // TODO: status code may be incorrect - what kind of exceptions do we expect to deal with here? invalid user input? internal server error? both?
-        console.error(`Klaida keičiant mokinio duomenis: ${error}`);
-        res.status(400).json({ msg: "Nepavyko pakeisti duomenų apie mokinį" });
-    }
-}
-
-/**
- * Funkcija tikisi kad bus nustatyta res.student : Student (žr. getUser())
- */
-const deleteUser = async (req, res) => {
-    try {
-        await res.student.remove()
-        res.json({ msg: "Success" })
-    }
-    catch (err) {
-        // TODO: status code may be incorrect - what kind of exceptions do we expect to deal with here? invalid user input? internal server error? both?
-        console.error(`Klaida ištrinant mokinį: ${error}`);
-        res.status(400).json({ msg: 'Nepavyko ištrinti mokinio' });
-    }
-}
-
-/**
- *
- */
-const getAllUsers = async (req, res) => {
-    try {
-        const allStudents = await Student.find();
-        res.json(allStudents);
-    }
-    catch (error) {
-        // TODO: status code may be incorrect - what kind of exceptions do we expect to deal with here? invalid user input? internal server error? both?
-        console.error(`Klaida registruojant mokinį: ${error}`);
-        res.status(400).json({ msg: 'Nepavyko užregistruoti naujo mokinio' });
-    }
-}
-
-/**
- *
- */
-const postUserId = (req, res) => {
-    student = res.student;
-    student.name = res.student.name;
-    student.surname = res.student.surname;
-    student.email = res.student.email;
-    student.personalCode = res.student.personalCode;
-    student.password = res.student.password;
-
-    res.render('./appForAll.ejs');
-};
 
 /**
  * Randa mokinį su parametruose nurodytu email
@@ -159,10 +104,6 @@ module.exports = {
     getLogin,
     getRegister,
     postLogin,
-    postRegister,
-    postUserId,
-    getAllUsers,
+    postRegister, 
     getUser,
-    deleteUser,
-    patchUser
 }

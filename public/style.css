@@ -3,12 +3,12 @@ body {display: flex;
 	align-items: center;
 	justify-content: center;} 
 
-h1  {
+/* h1  {
     padding: 40px;
 }
-.h2 {
-    padding-bottom: 1rem;
-}
+h3 {
+    padding: 1rem;
+} */
 
 button {padding: 7px;
     background-color: rgb(243, 134, 84);
