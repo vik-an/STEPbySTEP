@@ -2,6 +2,10 @@ const Student = require('./models/student.js');
 const bcrypt = require("bcrypt");
 var session = require('express-session')
 
+const mongoose = require('mongoose');
+
+var MongoStore = require('connect-mongo');
+
 /**
  *
  */
@@ -26,7 +30,7 @@ const postRegister = async (req, res, next) => {
         const savedStudent = await newStudent.save();
 
         // TODO: return better object for client Jscript or a nicer page
-        res.status(201).json({ msg: `Naujas mokinys vardu ${newStudent.name} sukurtas sėkmingai. Prisijungimui prie sistemos naudokite: ${newStudent.email} ir slaptažodį` });
+        res.status(201).json({ msg: `Naujas mokinys vardu ${newStudent.name} sukurtas sėkmingai. Prisijungimui prie sistemos naudokite: ${newStudent.email} ir slaptažodį ` });
     }
     catch (error) {
         // TODO: status code may be incorrect - what kind of exceptions do we expect to deal with here? invalid user input? internal server error? both?
@@ -45,25 +49,31 @@ const getLogin = (req, res) => {
 /**
  *
  */
-const postLogin = async (req, res) => {
+const postLogin = async (req, res, next) => {
     const student = await Student.findOne({ email: req.body.email });
     if (student == null) {
-        req.session.error = "nurodytas mokinys nerastas";
+        req.error = "nurodytas mokinys nerastas";
+        console.log(" mokinys nerastas");
         return res.redirect("/login");
+        
         // res.status(404).json({ msg: "Nurodytas mokinys nerastas" });
         // return;
     } else if(student){
         const validPassword = await bcrypt.compare(req.body.password, student.password)
         if( validPassword){
-            req.session.email = student.email;
-            res.redirect("/appForAll.ejs")
-          //  res.status(200).json({msg: `Sveiki prisijungę ${student.name}` })
+            //sesijos pradžia
+            console.log("jungiamasi prie sesijos");
+           next();
+
+            // req.session.email = student.email;
+            
+        //    res.status(200).json({msg: `Sveiki prisijungę ${student.name}` })
 
 
          } else{ 
-       // res.status(400).json({ error: " Neteisingas slaptažodis"})
-        req.session.error = "Neteisingas slaptažodis";
-        return res.redirect("/login");
+       res.status(400).json({ error: " Neteisingas slaptažodis"})
+        // req.session.error = "Neteisingas slaptažodis";
+        // return res.redirect("/login");
            ;}
 
     }

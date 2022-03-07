@@ -1,3 +1,3 @@
 1 padaryti web useriui funk delete, patch.
 2 padaryti normalu psl po logino/ user experience
-3 padaryti password kurimą su bcrypt
+3 padaryti password kurimą su bcrypt DONE

@@ -1,3 +1,6 @@
+const Student = require('./models/student.js');
+
+
 const patchUser = async (req, res) => {
     try {
         if (req.body.name != null) {

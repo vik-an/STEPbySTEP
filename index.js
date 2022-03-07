@@ -5,14 +5,14 @@ const express = require('express')
 const router = require('./router.js')
 const mongoose = require('mongoose');
 const session = require('express-session');
-//const MongoDBStore = require("connect-mongodb-session")(session);
+var MongoStore = require('connect-mongo');
 
 const path = require('path/posix');
 
 // const serveStatic = require('serve-static');
 
 const dbUri = process.env.DATABASE_URL || 'mongodb://127.0.0.1:27017/draiveris';
-mongoose.connect(dbUri, { useNewUrlParser: true }).then(
+mongoose.connect(dbUri, { useNewUrlParser: true}).then(
     () => { console.log(`DB prisijungimas sėkmingas: ${dbUri}`); }
     // Initial DB connect error will end the server, but it's of no use without DB anyway
     // error => { console.error(`DB prisijungimo klaida: ${error}`); } 
@@ -21,10 +21,7 @@ mongoose.connection.on('error', error => {
     console.error(`DB klaida: ${error}`);
 });
 
-// const store = new MongoDBStore({
-//     uri: mongoURI,
-//     collection: "mySessions",
-//   });
+
 
 const app = express()
 app.use(express.json()); //json tam kad veiktų vidinės funkcijos
@@ -34,13 +31,8 @@ app.use(express.static('./public')) //  IR VISTIEK  neveikia...
 //app.use(serveStatic('public/style.css', { index: 'default.html' }))
 app.use(express.urlencoded({ extended: false })) //kad skaitytu gautą tekstą iš html
 
-app.set('trust proxy', 1) // trust first proxy
-app.use(session({
-  secret: 'keyboard cat',
-  resave: false,
-  saveUninitialized: true,
-  cookie: { secure: true }
-}))
+
+  
 
 app.use('/', router)
 
