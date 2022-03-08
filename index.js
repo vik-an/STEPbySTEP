@@ -12,7 +12,7 @@ const path = require('path/posix');
 // const serveStatic = require('serve-static');
 
 const dbUri = process.env.DATABASE_URL || 'mongodb://127.0.0.1:27017/draiveris';
-mongoose.connect(dbUri, { useNewUrlParser: true}).then(
+mongoose.connect(dbUri, { useNewUrlParser: true, useUnifiedTopology: true}).then(
     () => { console.log(`DB prisijungimas sėkmingas: ${dbUri}`); }
     // Initial DB connect error will end the server, but it's of no use without DB anyway
     // error => { console.error(`DB prisijungimo klaida: ${error}`); } 
@@ -20,6 +20,7 @@ mongoose.connect(dbUri, { useNewUrlParser: true}).then(
 mongoose.connection.on('error', error => {
     console.error(`DB klaida: ${error}`);
 });
+
 
 
 
@@ -32,12 +33,29 @@ app.use(express.static('./public')) //  IR VISTIEK  neveikia...
 app.use(express.urlencoded({ extended: false })) //kad skaitytu gautą tekstą iš html
 
 
+app.use(session({
+    secret: 'secret word',
+    saveUninitialized: true,
+    resave: true,
+    store: MongoStore.create({mongoUrl: 'mongodb://127.0.0.1:27017/draiveris',
+    collection: 'Sessions',
+    touchAfter: 24 * 3600,
+    cookie: {  maxAge: 1000 * 60 * 60 * 24 * 7 },
+
+     })
+  }));
+
+
   
 
 app.use('/', router)
 
 app.get('/', (req, res) => {
+
+   
     res.status(201).render('./face.ejs')
+    console.log(req.session)
+    
 })
 
 app.all('*', (req, res) => {

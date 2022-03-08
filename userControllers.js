@@ -4,15 +4,19 @@ const session = require('express-session');
 var MongoStore = require('connect-mongo');
 const express = require('express')
 
+
+
+
+
 const getSesion = (req, res) => {
     const sess = express();
     sess.use(session({
         secret: 'secret word',
         saveUninitialized: true,
-        resave: true,
-        store: MongoStore.create({mongoUrl: 'mongodb://127.0.0.1:27017/draiveris_session',
+        resave: false,
+        store:  MongoStore.create({mongoUrl: 'mongodb://127.0.0.1:27017/draiveris_session',
         touchAfter: 24 * 3600,
-        cookie: { maxAge: 1000*60*6024}
+        cookie: { maxAge: 1000*60*60*24}
     
          })
         
@@ -22,4 +26,4 @@ const getSesion = (req, res) => {
     res.status(200).render('./userExp.ejs');
 };
 
-module.exports ={ getSesion}
+module.exports = { getSesion}

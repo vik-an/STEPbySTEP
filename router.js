@@ -24,7 +24,7 @@ router.route('/users').get(getAllUsers)
 //user dalis skirta tik adinistratoriams:
 router.route('/users/:email').get(getUser, postUserId).delete(getUser, deleteUser).patch(getUser, patchUser);
 router.route('/sos').get(pasirinkimas);
-router.route('/login').get(getLogin).post(postLogin, getSesion);
+router.route('/login').get(getLogin).post(postLogin);
 router.route('/userExp').get(getSesion);
 
 module.exports = router
