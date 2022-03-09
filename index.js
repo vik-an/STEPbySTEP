@@ -4,7 +4,7 @@ const { config } = require('dotenv');
 const express = require('express')
 const router = require('./router.js')
 const mongoose = require('mongoose');
-const session = require('express-session');
+const sessions = require('express-session');
 var MongoStore = require('connect-mongo');
 
 const path = require('path/posix');
@@ -31,32 +31,46 @@ app.set('views', __dirname + '/views') //nustato kad vaizdu ieskos views faile, 
 app.use(express.static('./public')) //  IR VISTIEK  neveikia...
 //app.use(serveStatic('public/style.css', { index: 'default.html' }))
 app.use(express.urlencoded({ extended: false })) //kad skaitytu gautą tekstą iš html
-
-
-app.use(session({
+app.set('trust proxy', 1)
+ 
+app.use(sessions({
     secret: 'secret word',
     saveUninitialized: true,
-    resave: true,
-    store: MongoStore.create({mongoUrl: 'mongodb://127.0.0.1:27017/draiveris',
-    collection: 'Sessions',
-    touchAfter: 24 * 3600,
-    cookie: {  maxAge: 1000 * 60 * 60 * 24 * 7 },
+    resave: false,
+    cookie: {  maxAge: 1000 * 60 * 60 * 24 * 7,
+     secure: true ,
+     },
+     store: MongoStore.create({mongoUrl: 'mongodb://127.0.0.1:27017/draiveris',
+     collection: 'Sessions',
+     touchAfter: 24 * 3600,
+     crypto: {
+        secret: 'squirrel'
+      }
+    // cookie: {  maxAge: 1000 * 60 * 60 * 24 * 7, secure: true  },
 
      })
   }));
 
 
   
+var session
 
 app.use('/', router)
 
 app.get('/', (req, res) => {
-
-   
+    session = req.session;
+    if(session.userid){
+        res.send("Welcome User <a href=\'/logout'>click to logout</a>");
+    }else{
     res.status(201).render('./face.ejs')
     console.log(req.session)
-    
+    }
 })
+
+app.get('/logout',(req,res) => {
+    req.session.destroy();
+    res.redirect('/');
+});
 
 app.all('*', (req, res) => {
     res.status(404).render("./error.ejs")

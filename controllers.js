@@ -1,10 +1,10 @@
 const Student = require('./models/student.js');
 const bcrypt = require("bcrypt");
-// var session = require('express-session')
-// const express = require('express')
-// const mongoose = require('mongoose');
+var session = require('express-session')
+const express = require('express')
+const mongoose = require('mongoose');
 
-// var MongoStore = require('connect-mongo');
+var MongoStore = require('connect-mongo');
 
 /**
  *
@@ -49,7 +49,8 @@ const getLogin = (req, res) => {
 /**
  *
  */
-const postLogin = async (req, res, next) => {
+// postLogin === auth
+const auth = async (req, res, next) => {
     const student = await Student.findOne({ email: req.body.email });
     if (student == null) {
         req.error = "nurodytas mokinys nerastas";
@@ -63,31 +64,18 @@ const postLogin = async (req, res, next) => {
        var rek = req.body.password;
         console.log(`patikrino pasworda ${rek}`)
         if( validPassword){ 
-            //sesijos pradžia
-            // console.log("jungiamasi prie sesijos");
-            // const sess = express();
-            // sess.use(session({
-            //     secret: 'secret word',
-            //     saveUninitialized: true,
-            //     resave: false,
-            //     store:  MongoStore.create({mongoUrl: 'mongodb://127.0.0.1:27017/draiveris_session',
-            //     touchAfter: 24 * 3600,
-            //     cookie: { maxAge: 1000*60*60*24}
-            
-            //      })
-                
-            //   }));
+         
            
              console.log(`sesija vyksta `)
-             console.log(req.session)
+             console.log('req.session.id ', req.session.id)
               // req.session.email = student.email;
-            res.status(200).render('./userExp.ejs');
-
+           // res.status(200).render('./userExp.ejs');
+           // res.session(200).render('./login.ejs');
           
         
         //    res.status(200).json({msg: `Sveiki prisijungę ${student.name}` })
 
-
+next()
          } else{ 
        res.status(400).json({ error: " Neteisingas slaptažodis"})
        console.log("netiko password")
@@ -97,10 +85,22 @@ const postLogin = async (req, res, next) => {
 
     }
 
-    // TODO: verify password
-
-    //res.status(200).render('./appForAll.ejs')
    
+   
+}
+ 
+// const getLogin = (req, res) => {
+//     res.render('./login.ejs');
+// };
+const loggedSuccess = (req,res) => {
+   // res.session(200).render('./userExp.ejs');
+   console.log(req.body)
+   session = req.session;
+   console.log(  " loggedSuccess session id", req.session.id)
+   session.userid=req.body.email;
+   console.log(" req. session", req.session)
+  // res.send(`Hey there, welcome <a href=\'/logout'>click to logout</a>`);
+     res.status(200).render('./userExp.ejs')
 }
 
 /**
@@ -132,7 +132,8 @@ async function getUser(req, res, next) {
 module.exports = {
     getLogin,
     getRegister,
-    postLogin,
+    auth,
     postRegister, 
     getUser,
+    loggedSuccess
 }

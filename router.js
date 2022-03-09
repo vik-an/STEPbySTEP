@@ -7,24 +7,25 @@ getAllUsers,
 	patchUser
 } = require("./adminControllers.js");
 
-const  { getSesion } = require("./userControllers.js")
+
 
 const {
 	getUser,
 	postRegister,
 	getRegister,
 	getLogin,
-	postLogin	
+	auth,
+    loggedSuccess	
 } = require('./controllers.js');
 const { pasirinkimas } = require('./bkk.js')
-const sess = require('./session.js')
+
 
 router.route('/register').get(getRegister).post(postRegister);
 router.route('/users').get(getAllUsers)
 //user dalis skirta tik adinistratoriams:
 router.route('/users/:email').get(getUser, postUserId).delete(getUser, deleteUser).patch(getUser, patchUser);
 router.route('/sos').get(pasirinkimas);
-router.route('/login').get(getLogin).post(postLogin);
-router.route('/userExp').get(getSesion);
+router.route('/login').get(getLogin).post(auth, loggedSuccess);
+router.route('/userExp')
 
 module.exports = router
