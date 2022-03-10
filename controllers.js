@@ -9,9 +9,11 @@ var MongoStore = require('connect-mongo');
 /**
  *
  */
+
+ var sess;
 const getRegister = (req, res) => {
-    session = req.session;
-    if(session.userid){
+    sess = req.session;
+    if(sess.userid){
         res.send("Jei norite registruotis - atsijunkite nuo sesijos:  <a href=\'/logout'>click to logout</a>");
     }else{
      res.render('./register.ejs')
@@ -50,9 +52,9 @@ const postRegister = async (req, res, next) => {
  */
 const getLogin = (req, res) => {
 
-    session = req.session;
-    console.log(session)
-    if(session.userid){
+    sess = req.session;
+    console.log(sess)
+    if(sess.userid){
         res.status(200).render('./userExp.ejs')
     }else{
         res.render('./login.ejs');
@@ -111,9 +113,9 @@ const loggedSuccess = (req,res) => {
     
    // res.session(200).render('./userExp.ejs');
    console.log("req body : ", req.body)
-   session = req.session;
+   sess = req.session;
    console.log(  " loggedSuccess session id", req.session.id)
-   session.userid=req.body.email;
+   sess.userid = req.body.email;
    console.log(" req. session:", req.session)
   // res.send(`Hey there, welcome <a href=\'/logout'>click to logout</a>`);
      res.status(200).render('./userExp.ejs')
