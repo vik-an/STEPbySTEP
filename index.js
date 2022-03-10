@@ -6,6 +6,7 @@ const router = require('./router.js')
 const mongoose = require('mongoose');
 const sessions = require('express-session');
 var MongoStore = require('connect-mongo');
+var parseurl = require('parseurl');
 
 const path = require('path/posix');
 
@@ -35,42 +36,54 @@ app.set('trust proxy', 1)
  
 app.use(sessions({
     secret: 'secret word',
-    saveUninitialized: true,
+    saveUninitialized: false,
     resave: false,
     cookie: {  maxAge: 1000 * 60 * 60 * 24 * 7,
-     secure: true ,
+     
      },
-     store: MongoStore.create({mongoUrl: 'mongodb://127.0.0.1:27017/draiveris',
-     collection: 'Sessions',
-     touchAfter: 24 * 3600,
-     crypto: {
-        secret: 'squirrel'
-      }
-    // cookie: {  maxAge: 1000 * 60 * 60 * 24 * 7, secure: true  },
+    
+    //  store: MongoStore.create({mongoUrl: 'mongodb://127.0.0.1:27017/draiveris',
+    //  collection: 'Sessions',
+    //  touchAfter: 24 * 3600,
+    //      // cookie: {  maxAge: 1000 * 60 * 60 * 24 * 7, secure: true  },
+    //      connectionOptions: {
+    //         useNewUrlParser: true,
+    //         useUnifiedTopology: true,
+    //         serverSelectionTimeoutMS: 10000
+    //       }
+    //  })
+   }));
 
-     })
-  }));
+
+   
 
 
+   app.use(function (req, res, next) {
+    if (!req.session.views) {
+      req.session.views = {}
+    }
+    var pathname = parseurl(req).pathname;
+    req.session.views[pathname] = (req.session.views[pathname] || 0) + 1
+    next()
+})
   
-var session
+
 
 app.use('/', router)
 
 app.get('/', (req, res) => {
-    session = req.session;
-    if(session.userid){
-        res.send("Welcome User <a href=\'/logout'>click to logout</a>");
-    }else{
+
     res.status(201).render('./face.ejs')
     console.log(req.session)
-    }
+   
 })
+
 
 app.get('/logout',(req,res) => {
     req.session.destroy();
     res.redirect('/');
 });
+
 
 app.all('*', (req, res) => {
     res.status(404).render("./error.ejs")

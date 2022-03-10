@@ -10,7 +10,13 @@ var MongoStore = require('connect-mongo');
  *
  */
 const getRegister = (req, res) => {
-    res.render('./register.ejs')
+    session = req.session;
+    if(session.userid){
+        res.send("Jei norite registruotis - atsijunkite nuo sesijos:  <a href=\'/logout'>click to logout</a>");
+    }else{
+     res.render('./register.ejs')
+    }
+
 };
 
 /**
@@ -30,7 +36,7 @@ const postRegister = async (req, res, next) => {
         const savedStudent = await newStudent.save();
 
         // TODO: return better object for client Jscript or a nicer page
-        res.status(201).json({ msg: `Naujas mokinys vardu ${newStudent.name} sukurtas sėkmingai. Prisijungimui prie sistemos naudokite: ${newStudent.email} ir slaptažodį ` });
+        res.status(201).send( `Naujas mokinys vardu ${newStudent.name} sukurtas sėkmingai. Prisijungimui prie sistemos naudokite: ${newStudent.email} ir slaptažodį. <a href=\'/login'>click to login</a> ` );
     }
     catch (error) {
         // TODO: status code may be incorrect - what kind of exceptions do we expect to deal with here? invalid user input? internal server error? both?
@@ -43,7 +49,15 @@ const postRegister = async (req, res, next) => {
  *
  */
 const getLogin = (req, res) => {
-    res.render('./login.ejs');
+
+    session = req.session;
+    console.log(session)
+    if(session.userid){
+        res.status(200).render('./userExp.ejs')
+    }else{
+        res.render('./login.ejs');
+    }
+    
 };
 
 /**
@@ -93,12 +107,14 @@ next()
 //     res.render('./login.ejs');
 // };
 const loggedSuccess = (req,res) => {
+
+    
    // res.session(200).render('./userExp.ejs');
-   console.log(req.body)
+   console.log("req body : ", req.body)
    session = req.session;
    console.log(  " loggedSuccess session id", req.session.id)
    session.userid=req.body.email;
-   console.log(" req. session", req.session)
+   console.log(" req. session:", req.session)
   // res.send(`Hey there, welcome <a href=\'/logout'>click to logout</a>`);
      res.status(200).render('./userExp.ejs')
 }
